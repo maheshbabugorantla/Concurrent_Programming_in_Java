@@ -1,0 +1,7 @@
+
+# Ignore the .idea files
+*/.idea/ 
+
+# Ignoring Sample Projects
+miniproject-0/
+
