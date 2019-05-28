@@ -1,5 +1,9 @@
 package edu.coursera.concurrent;
 
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
+
 /**
  * Wrapper class for two lock-based concurrent list implementations.
  */
@@ -20,6 +24,8 @@ public final class CoarseLists {
          * concurrent add, remove, and contains methods below.
          */
 
+        ReentrantLock reentrantLock = new ReentrantLock();
+
         /**
          * Default constructor.
          */
@@ -29,67 +35,89 @@ public final class CoarseLists {
 
         /**
          * {@inheritDoc}
-         *
+         * <p>
          * TODO Use a lock to protect against concurrent access.
          */
         @Override
         boolean add(final Integer object) {
-            Entry pred = this.head;
-            Entry curr = pred.next;
 
-            while (curr.object.compareTo(object) < 0) {
-                pred = curr;
-                curr = curr.next;
-            }
+            reentrantLock.lock(); // Acquiring the Lock
 
-            if (object.equals(curr.object)) {
-                return false;
-            } else {
-                final Entry entry = new Entry(object);
-                entry.next = curr;
-                pred.next = entry;
-                return true;
+            try {
+                Entry pred = this.head;
+                Entry curr = pred.next;
+
+                while (curr.object.compareTo(object) < 0) {
+                    pred = curr;
+                    curr = curr.next;
+                }
+
+                if (!object.equals(curr.object)) {
+                    final Entry entry = new Entry(object);
+                    entry.next = curr;
+                    pred.next = entry;
+                    return true;
+                }
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            } finally {
+                reentrantLock.unlock();
             }
+            return false;
         }
 
         /**
          * {@inheritDoc}
-         *
+         * <p>
          * TODO Use a lock to protect against concurrent access.
          */
         @Override
         boolean remove(final Integer object) {
-            Entry pred = this.head;
-            Entry curr = pred.next;
+            reentrantLock.lock(); // Creates a Blocking Lock
+            try {
+                Entry pred = this.head;
+                Entry curr = pred.next;
 
-            while (curr.object.compareTo(object) < 0) {
-                pred = curr;
-                curr = curr.next;
-            }
+                while (curr.object.compareTo(object) < 0) {
+                    pred = curr;
+                    curr = curr.next;
+                }
 
-            if (object.equals(curr.object)) {
-                pred.next = curr.next;
-                return true;
-            } else {
-                return false;
+                if (object.equals(curr.object)) {
+                    pred.next = curr.next;
+                    return true;
+                }
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            } finally {
+                reentrantLock.unlock();
             }
+            return false;
         }
 
         /**
          * {@inheritDoc}
-         *
+         * <p>
          * TODO Use a lock to protect against concurrent access.
          */
         @Override
         boolean contains(final Integer object) {
-            Entry pred = this.head;
-            Entry curr = pred.next;
 
-            while (curr.object.compareTo(object) < 0) {
-                pred = curr;
-                curr = curr.next;
+            reentrantLock.lock();
+
+            try {
+                Entry curr = this.head.next;
+
+                while (curr.object.compareTo(object) < 0) {
+                    curr = curr.next;
+                }
+                return object.equals(curr.object);
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            } finally {
+                reentrantLock.unlock();
             }
-            return object.equals(curr.object);
+            return false;
         }
     }
 
@@ -110,11 +138,17 @@ public final class CoarseLists {
          * implementing the concurrent add, remove, and contains methods below.
          */
 
+        ReentrantReadWriteLock reentrantReadWriteLock = new ReentrantReadWriteLock();
+//        private final Lock readLock;
+//        private final Lock writeLock;
+
         /**
          * Default constructor.
          */
         public RWCoarseList() {
             super();
+//            this.readLock = reentrantReadWriteLock.readLock();
+//            this.writeLock = reentrantReadWriteLock.writeLock();
         }
 
         /**
@@ -124,22 +158,30 @@ public final class CoarseLists {
          */
         @Override
         boolean add(final Integer object) {
-            Entry pred = this.head;
-            Entry curr = pred.next;
 
-            while (curr.object.compareTo(object) < 0) {
-                pred = curr;
-                curr = curr.next;
-            }
+            reentrantReadWriteLock.writeLock().lock();
 
-            if (object.equals(curr.object)) {
-                return false;
-            } else {
-                final Entry entry = new Entry(object);
-                entry.next = curr;
-                pred.next = entry;
-                return true;
+            try {
+                Entry pred = this.head;
+                Entry curr = pred.next;
+
+                while (curr.object.compareTo(object) < 0) {
+                    pred = curr;
+                    curr = curr.next;
+                }
+
+                if (!object.equals(curr.object)) {
+                    final Entry entry = new Entry(object);
+                    entry.next = curr;
+                    pred.next = entry;
+                    return true;
+                }
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            } finally {
+                reentrantReadWriteLock.writeLock().unlock();
             }
+            return false;
         }
 
         /**
@@ -149,20 +191,28 @@ public final class CoarseLists {
          */
         @Override
         boolean remove(final Integer object) {
-            Entry pred = this.head;
-            Entry curr = pred.next;
 
-            while (curr.object.compareTo(object) < 0) {
-                pred = curr;
-                curr = curr.next;
-            }
+            reentrantReadWriteLock.writeLock().lock();
 
-            if (object.equals(curr.object)) {
-                pred.next = curr.next;
-                return true;
-            } else {
-                return false;
+            try {
+                Entry pred = this.head;
+                Entry curr = pred.next;
+
+                while (curr.object.compareTo(object) < 0) {
+                    pred = curr;
+                    curr = curr.next;
+                }
+
+                if (object.equals(curr.object)) {
+                    pred.next = curr.next;
+                    return true;
+                }
+            } catch(NullPointerException e) {
+                e.printStackTrace();
+            } finally {
+                reentrantReadWriteLock.writeLock().unlock();
             }
+            return false;
         }
 
         /**
@@ -172,14 +222,24 @@ public final class CoarseLists {
          */
         @Override
         boolean contains(final Integer object) {
-            Entry pred = this.head;
-            Entry curr = pred.next;
 
-            while (curr.object.compareTo(object) < 0) {
-                pred = curr;
-                curr = curr.next;
+            reentrantReadWriteLock.readLock().lock();
+
+            try {
+                Entry pred = this.head;
+                Entry curr = pred.next;
+
+                while (curr.object.compareTo(object) < 0) {
+                    pred = curr;
+                    curr = curr.next;
+                }
+                return object.equals(curr.object);
+            } catch (NullPointerException e) {
+                e.printStackTrace();
+            } finally {
+                reentrantReadWriteLock.readLock().unlock();
             }
-            return object.equals(curr.object);
+            return false;
         }
     }
 }
