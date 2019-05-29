@@ -61,7 +61,7 @@ public final class SieveActor extends Sieve {
          * @param msg Received message
          */
 
-        private static final int max_local_primes = 100;
+        private static final int max_local_primes = 50;
         private final int[] localPrimes;
         private int numPrimesCount;
         private SieveActorActor nextActor;
